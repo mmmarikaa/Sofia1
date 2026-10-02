@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Notifiche</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      height: 100vh;
+      height: 100dvh; /* Supporto per mobile viewport dinamico */
+      background: radial-gradient(circle at top right, #0284c7 0%, #0f172a 60%, #020617 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 16px 28px 16px;
+      overflow: hidden;
+      color: #ffffff;
+      position: relative;
+    }
+
+    /* Effetto luce ambientale soffusa */
+    .glow-bg {
+      position: absolute;
+      top: 10%;
+      right: 10%;
+      width: 250px;
+      height: 250px;
+      background: #38bdf8;
+      opacity: 0.15;
+      filter: blur(90px);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Header minimale in alto */
+    .header {
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      padding-top: 12px;
+      padding-bottom: 8px;
+      z-index: 10;
+    }
+
+    .header-tag {
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #38bdf8;
+      text-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .header-sub {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-top: 4px;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+    }
+
+    /* Feed Notifiche a scorrimento */
+    .feed-notifiche {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex-grow: 1;
+      justify-content: flex-start;
+      margin-top: 16px;
+      margin-bottom: 16px;
+      overflow-y: auto;
+      padding-right: 4px;
+      padding-left: 4px;
+      padding-bottom: 10px;
+      z-index: 10;
+      /* Style scrollbar personalizzato per mobile */
+      scrollbar-width: thin;
+      scrollbar-color: rgba(56, 189, 248, 0.3) transparent;
+    }
+
+    .feed-notifiche::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .feed-notifiche::-webkit-scrollbar-thumb {
+      background: rgba(56, 189, 248, 0.3);
+      border-radius: 4px;
+    }
+
+    /* Singola Notifica iOS Glassmorphism */
+    .notifica {
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-radius: 22px;
+      padding: 16px 18px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 15px rgba(56, 189, 248, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      opacity: 0;
+      transform: translateY(-24px) scale(0.96);
+      animation: popIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      transition: all 0.3s ease;
+    }
+
+    .notifica-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      color: #7dd3fc;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .notifica-title-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .notifica-icon {
+      font-size: 0.9rem;
+    }
+
+    .notifica-time {
+      font-size: 0.72rem;
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    .notifica-body {
+      font-size: 0.98rem;
+      color: #f8fafc;
+      font-weight: 500;
+      line-height: 1.45;
+      letter-spacing: -0.1px;
+    }
+
+    /* Area comandi in basso */
+    .bottom-bar {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    .btn-notifica {
+      width: 100%;
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      color: #030712;
+      border: none;
+      padding: 16px 20px;
+      font-size: 1.02rem;
+      font-weight: 700;
+      border-radius: 24px;
+      cursor: pointer;
+      box-shadow: 0 8px 25px rgba(56, 189, 248, 0.35), 0 2px 8px rgba(2, 132, 199, 0.2);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      user-select: none;
+    }
+
+    .btn-notifica:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(56, 189, 248, 0.45);
+    }
+
+    .btn-notifica:active {
+      transform: scale(0.96) translateY(0);
+      box-shadow: 0 4px 15px rgba(56, 189, 248, 0.25);
+    }
+
+    .btn-disabilitato {
+      background: rgba(30, 41, 59, 0.7);
+      color: #64748b;
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      box-shadow: none;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    /* Animazione d'ingresso della notifica */
+    @keyframes popIn {
+      0% {
+        opacity: 0;
+        transform: translateY(-24px) scale(0.96);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="glow-bg"></div>
+
+  <!-- Header minimale -->
+  <div class="header">
+    <div class="header-tag">
+      <span>NOTIFICHE</span> 
+    </div>
+    <div class="header-sub">Centro </div>
+  </div>
+
+  <!-- Feed dinamico dove vengono generate le notifiche -->
+  <div class="feed-notifiche" id="feed">
+    <!-- Le notifiche compaiono a cascata qui al click -->
+  </div>
+
+  <!-- Barra controlli in basso -->
+  <div class="bottom-bar">
+    <button class="btn-notifica" id="btn" onclick="prossimaNotifica()">
+      <span id="btn-text">Genera notifica</span>
+      <span id="btn-icon"></span>
+    </button>
+  </div>
+
+  <script>
+    /* Array di freddure e messaggi divertenti */
+    const notificheData = [
+      {
+        icona: "",
+        titolo: "Notifica #1",
+        testo: "perché i pesci non usano mai whatsapp? perché hanno una paura folle della rete!"
+      },
+      {
+        icona: "",
+        titolo: "Notifica #2",
+        testo: "quest'aereo è uno schianto... è caduto"
+      },
+      {
+        icona: "",
+        titolo: "Notifica #3",
+        testo: "il mio commericialista era molto triste... è partita iva"
+      },
+      {
+        icona: "",
+        titolo: "Notifica #4",
+        testo: "come si chiama il cane di un famosissimo mago? il labra-cadabra! "
+      },
+      {
+        icona: "",
+        titolo: "Notifica #5",
+        testo: "abbiamo riso abbastanza, adesso pasta"
+      },
+      {
+        icona: "",
+        titolo: "fine",
+        testo: "ok, basta "
+      }
+    ];
+
+    let indice = 0;
+
+    function prossimaNotifica() {
+      if (indice >= notificheData.length) return;
+
+      const feed = document.getElementById('feed');
+      const item = notificheData[indice];
+      
+      // Creazione dell'elemento notifica iOS
+      const notifica = document.createElement('div');
+      notifica.classList.add('notifica');
+
+      // Calcolo ora e minuti attuali
+      const ora = new Date();
+      const timeStr = ora.getHours().toString().padStart(2, '0') + ':' + ora.getMinutes().toString().padStart(2, '0');
+
+      notifica.innerHTML = `
+        <div class="notifica-header">
+          <div class="notifica-title-box">
+            <span class="notifica-icon">${item.icona}</span>
+            <span>${item.titolo}</span>
+          </div>
+          <span class="notifica-time">${timeStr}</span>
+        </div>
+        <div class="notifica-body">${item.testo}</div>
+      `;
+
+      feed.appendChild(notifica);
+
+      // Scroll fluido verso la nuova notifica
+      setTimeout(() => {
+        feed.scrollTo({
+          top: feed.scrollHeight,
+          behavior: 'smooth'
+        });
+      }, 50);
+
+      indice++;
+
+      // Gestione stato ed estetica del pulsante
+      const btnText = document.getElementById('btn-text');
+      const btnIcon = document.getElementById('btn-icon');
+      const btn = document.getElementById('btn');
+
+      if (indice === 1) {
+        btnText.innerText = "Un'altra!";
+        btnIcon.innerText = "";
+      } else if (indice === notificheData.length - 1) {
+        btnText.innerText = "Ultima ";
+        btnIcon.innerText = "";
+      } else if (indice >= notificheData.length) {
+        btnText.innerText = "Tutte  lette! ";
+        btnIcon.innerText = "";
+        btn.classList.add('btn-disabilitato');
+        btn.onclick = null;
+      }
+    }
+  </script>
+</body>
+</html>
